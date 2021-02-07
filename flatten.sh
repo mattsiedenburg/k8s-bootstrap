@@ -1,43 +1,63 @@
-sudo apt-mark unhold docker-ce-cli docker-ce kubelet kubeadm kubectl
+#!/bin/bash
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
 
-sudo apt autoremove -y --allow-change-held-packages docker-ce kubelet kubeadm kubectl docker-ce docker-ce-cli
+if [[ $(which kubectl) ]]; then
+    cpe=$(hostname -I | awk -F " " '{ print $1 }')
+    kubectl drain $(hostname) --delete-emptydir-data --force --ignore-daemonsets
+else
+    echo "Could not find kubectl"
+fi
 
-
-cpe=$(hostname -I | awk -F " " '{ print $1 }')
-kubectl drain $(hostname) --delete-emptydir-data --force --ignore-daemonsets
-
-sudo kubeadm reset -f
-
-sudo rm -rf ~/.kube
-
-docker kill $(docker ps -qa)
-docker rm $(docker ps -qa)
-docker volume prune -f
-docker network prune -f
-
-sudo systemctl stop docker
-sudo systemctl stop kubelet
-
-wait 10
-
-sudo rm -rf /etc/kubernetes/
-sudo rm -rf /var/lib/kubelet/
-sudo rm -rf /var/lib/cni/
-sudo rm -rf /etc/cni/
-sudo rm -rf /var/lib/etcd/
-sudo rm -rf /var/lib/docker/
-sudo rm -rf /opt/cni/
-sudo rm -rf /opt/containerd/
-
-sudo systemctl start docker
-sudo systemctl start kubelet
-
-sudo iptables -F
-sudo iptables -t nat -F
-sudo iptables -t mangle -F
-sudo iptables -X
+if [[ $(which kubeadm) ]]; then
+    kubeadm reset -f
+else
+    echo "Could not find kubeadm"
+fi
 
 
-sudo iptables -P INPUT ACCEPT
-sudo iptables -P OUTPUT ACCEPT
-sudo iptables -P FORWARD ACCEPT
+if [[ $(which docker) ]]; then
+    docker kill $(docker ps -qa)
+    docker rm $(docker ps -qa)
+    docker volume prune -f
+    docker network prune -f
+else
+    echo "Could not find docker"
+fi
+
+
+systemctl stop docker
+systemctl stop kubelet
+
+rm -rf ~/.kube
+rm -rf /etc/kubernetes/
+rm -rf /var/lib/kubelet/
+rm -rf /var/lib/cni/
+rm -rf /etc/cni/
+rm -rf /var/lib/etcd/
+rm -rf /var/lib/docker/
+rm -rf /opt/cni/
+rm -rf /opt/containerd/
+rm -rf /usr/libexec/kubernetes/
+
+
+iptables -F
+iptables -t nat -F
+iptables -t mangle -F
+iptables -X
+
+
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+
+
+systemctl start docker
+systemctl start kubelet
+
+apt-mark unhold docker-ce-cli docker-ce kubelet kubeadm kubectl
+apt autoremove -y --allow-change-held-packages docker-ce kubelet kubeadm kubectl docker-ce docker-ce-cli
+
+
