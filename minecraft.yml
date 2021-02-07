@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft
+  labels:
+    app: minecraft
+spec:
+  selector:
+    matchLabels:
+      app: minecraft
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+      volumes:
+        - name: minecraft
+          hostPath:
+            path: /home/matt/minecraft
+            type: DirectoryOrCreate
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "1.5Gi"
+              cpu: "1000m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          ports:
+            - name: minecraft
+              containerPort: 25565
+              hostPort: 25565
+              protocol: TCP
+          env:
+            - name: VERSION
+              value: 1.16.4
+            - name: EULA
+              value: "TRUE"
+            - name: WORLD
+              value: "https://download2331.mediafire.com/xbx4r891x7yg/ij0zqbumkjufv39/Witchcraft+and+Wizardry.zip"
+            - name: ENABLE_AUTOPAUSE
+              value: "TRUE"
+            - name: WHITELIST
+              value: "Mateus80,Ada2015"
+          volumeMounts:
+            - name: minecraft
+              mountPath: /data
