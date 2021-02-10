@@ -4,6 +4,8 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+helm repo remove rancher-stable jetstack portainer traefik
+
 if [[ $(which kubectl) ]]; then
     cpe=$(hostname -I | awk -F " " '{ print $1 }')
     kubectl drain $(hostname) --delete-emptydir-data --force --ignore-daemonsets
@@ -41,6 +43,7 @@ rm -rf /var/lib/docker/
 rm -rf /opt/cni/
 rm -rf /opt/containerd/
 rm -rf /usr/libexec/kubernetes/
+rm -rf /var/lib/longhorn/
 
 
 iptables -F
@@ -54,8 +57,8 @@ iptables -P OUTPUT ACCEPT
 iptables -P FORWARD ACCEPT
 
 
-apt-mark unhold docker-ce-cli docker-ce kubelet kubeadm kubectl
-apt-get autoremove -y --purge --allow-change-held-packages docker-ce kubelet kubeadm kubectl docker-ce docker-ce-cli containerd.io
+apt-mark unhold docker-ce-cli docker-ce kubelet kubeadm kubectl helm containerd.io
+apt-get autoremove -y --purge --allow-change-held-packages kubelet kubeadm kubectl docker-ce docker-ce-cli containerd.io helm
 
 add-apt-repository -r "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
 rm -rf /etc/apt/sources.list.d/helm-stable-debian.list*

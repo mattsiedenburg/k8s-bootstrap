@@ -1,3 +1,39 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minecraft
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /home/matt/minecraft
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - mini
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft
+  namespace: default
+spec:
+  storageClassName: local-storage
+  volumeName: minecraft
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -19,9 +55,8 @@ spec:
     spec:
       volumes:
         - name: minecraft
-          hostPath:
-            path: /home/matt/minecraft
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: minecraft
       containers:
         - name: minecraft
           image: itzg/minecraft-server
@@ -43,8 +78,8 @@ spec:
               value: 1.16.4
             - name: EULA
               value: "TRUE"
-            - name: WORLD
-              value: "https://download2331.mediafire.com/xbx4r891x7yg/ij0zqbumkjufv39/Witchcraft+and+Wizardry.zip"
+            # - name: WORLD
+            #   value: "https://download2337.mediafire.com/vdy133sw81eg/ij0zqbumkjufv39/Witchcraft+and+Wizardry.zip"
             - name: ENABLE_AUTOPAUSE
               value: "TRUE"
             - name: WHITELIST
