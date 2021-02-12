@@ -76,16 +76,40 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manife
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/metallb.yaml
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 
+echo "Configuring MetalLB"
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses:
+      - 192.168.1.10-192.168.1.49
+EOF
+
 echo "Installing Prometheus and Grafana"
 kubectl create namespace monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
 
-echo "Change service/prometheus-kube-prometheus-operator, service/prometheus-grafana and longhorn-frontend to type LoadBalancer"
-echo "kubectl -n monitoring edit svc prometheus-kube-prometheus-operator"
-echo "kubectl -n monitoring edit svc prometheus-grafana"
-echo "kubectl -n longhorn-system edit svc longhorn-frontend"
+echo "Changing service/prometheus-kube-prometheus-prometheus, service/prometheus-grafana and longhorn-frontend to type LoadBalancer"
+kubectl get -n monitoring svc prometheus-kube-prometheus-prometheus -o yaml | \
+sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
+kubectl apply -f - -n monitoring
+
+kubectl get -n monitoring svc prometheus-grafana -o yaml | \
+sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
+kubectl apply -f - -n monitoring
+
+kubectl get -n longhorn-system svc longhorn-frontend -o yaml | \
+sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
+kubectl apply -f - -n longhorn-system
 
 echo "Taking ownership of ~/.kube"
 chown -R $(logname):$(id $(logname) -gn) $HOME/.kube
