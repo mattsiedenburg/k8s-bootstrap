@@ -4,7 +4,15 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-helm repo remove rancher-stable jetstack portainer traefik
+if [[ $(which helm) ]]; then
+    if [[ $(helm repo ls) ]]; then
+        helm repo ls -o yaml | grep 'name' | awk -F " " '{ print $3 }' | xargs helm repo remove
+    else
+        echo "No helm repos installed"
+    fi
+else
+    echo "Could not find helm"
+fi
 
 if [[ $(which kubectl) ]]; then
     cpe=$(hostname -I | awk -F " " '{ print $1 }')
@@ -33,7 +41,8 @@ fi
 systemctl stop docker
 systemctl stop kubelet
 
-rm -rf ~/.kube
+rm -rf ~/.kube/
+rm -rf ~/.config/helm/
 rm -rf /etc/kubernetes/
 rm -rf /var/lib/kubelet/
 rm -rf /var/lib/cni/
