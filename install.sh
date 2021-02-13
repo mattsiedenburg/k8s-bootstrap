@@ -28,8 +28,8 @@ echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt
 
 echo "Installing docker, docker CLI, kubeadm, kubelet, kubectl and helm"
 apt-get update
-
-apt-get install -y --allow-change-held-packages docker-ce=5:19.03.11~3-0~ubuntu-bionic docker-ce-cli=5:19.03.11~3-0~ubuntu-bionic kubelet=1.19.7-00 kubeadm=1.19.7-00 kubectl=1.19.7-00 containerd.io helm
+# https://releases.rancher.com/install-docker/19.03.sh
+apt-get install -y --allow-change-held-packages docker-ce=5:19.03.15~3-0~ubuntu-bionic docker-ce-cli=5:19.03.15~3-0~ubuntu-bionic containerd.io kubelet=1.19.7-00 kubeadm=1.19.7-00 kubectl=1.19.7-00 containerd.io helm
 apt-mark hold docker-ce docker-ce-cli kubelet kubeadm kubectl containerd.io helm
 
 echo "Adding user to docker group"
