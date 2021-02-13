@@ -16,7 +16,7 @@ fi
 
 if [[ $(which kubectl) ]]; then
     cpe=$(hostname -I | awk -F " " '{ print $1 }')
-    kubectl drain $(hostname) --delete-emptydir-data --force --ignore-daemonsets
+    kubectl drain $(hostname) --delete-local-data --force --ignore-daemonsets
 else
     echo "Could not find kubectl"
 fi

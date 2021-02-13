@@ -64,17 +64,21 @@ echo  "Installing Flannel"
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
 echo "Installing longhorn"
-kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.1.0/deploy/longhorn.yaml
+kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml
 
-echo "Configuring cluster for MetalLB"
+echo "Configuring configmap kube-proxy for MetalLB"
 kubectl get configmap kube-proxy -n kube-system -o yaml | \
    sed -e "s/strictARP: false/strictARP: true/" | \
    kubectl apply -f - -n kube-system
 
-echo "Instlling MetalLB"
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/metallb.yaml
+echo "Installing MetalLB"
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/main/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/main/manifests/metallb.yaml
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm repo update
+# helm install metal-lb bitnami/metallb
 
 echo "Configuring MetalLB"
 cat <<EOF | kubectl apply -f -
@@ -92,13 +96,19 @@ data:
       - 192.168.1.10-192.168.1.49
 EOF
 
+echo "Installing nginx ingress controller"
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/baremetal/deploy.yaml
+# helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+# helm repo update
+# helm install ingress-nginx ingress-nginx/ingress-nginx
+
 echo "Installing Prometheus and Grafana"
 kubectl create namespace monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
 
-echo "Changing service/prometheus-kube-prometheus-prometheus, service/prometheus-grafana and longhorn-frontend to type LoadBalancer"
+echo "Changing service/prometheus-kube-prometheus-prometheus, service/prometheus-grafana, longhorn-frontend and service/ingress-nginx-controller to type LoadBalancer"
 kubectl get -n monitoring svc prometheus-kube-prometheus-prometheus -o yaml | \
 sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
 kubectl apply -f - -n monitoring
@@ -111,8 +121,13 @@ kubectl get -n longhorn-system svc longhorn-frontend -o yaml | \
 sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
 kubectl apply -f - -n longhorn-system
 
-echo "Taking ownership of ~/.kube"
+kubectl get -n ingress-nginx svc ingress-nginx-controller -o yaml | \
+sed -e "s/type: NodePort/type: LoadBalancer/" | \
+kubectl apply -f - -n ingress-nginx
+
+echo "Taking ownership of ${HOME}/.kube and ${HOME}/.config"
 chown -R $(logname):$(id $(logname) -gn) $HOME/.kube
+chown -R $(logname):$(id $(logname) -gn) $HOME/.config
 
 # uninstall prometheus-community/kube-prometheus-stack
 # helm uninstall prometheus -n monitoring
