@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ddclient
+  namespace: default
+spec:
+  capacity:
+    storage: 10Mi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /home/matt/ddclient
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - mini
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ddclient
+  namespace: default
+spec:
+  storageClassName: local-storage
+  volumeName: ddclient
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ddclient
+  labels:
+    app: ddclient
+spec:
+  selector:
+    matchLabels:
+      app: ddclient
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ddclient
+    spec:
+      volumes:
+        - name: ddclient
+          persistentVolumeClaim:
+            claimName: ddclient
+      containers:
+        - name: ddclient
+          image: linuxserver/ddclient
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 0.1m
+            limits:
+              memory: 512Mi
+              cpu: 0.2m
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "America/Los_Angeles"
+          volumeMounts:
+            - name: ddclient
+              mountPath: /config
