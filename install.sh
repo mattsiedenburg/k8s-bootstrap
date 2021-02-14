@@ -129,7 +129,34 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo update
 helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
 
-echo "Changing service/prometheus-kube-prometheus-prometheus, service/prometheus-grafana, longhorn-frontend and service/ingress-nginx-controller to type LoadBalancer"
+echo "Installing kubernetes dashboard"
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+
+echo "Creating kubernetes-dashboard service account and role binding"
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+EOF
+
+echo "Changing select services to type LoadBalancer"
 kubectl get -n monitoring svc prometheus-kube-prometheus-prometheus -o yaml | \
 sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
 kubectl apply -f - -n monitoring
@@ -137,6 +164,10 @@ kubectl apply -f - -n monitoring
 kubectl get -n monitoring svc prometheus-grafana -o yaml | \
 sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
 kubectl apply -f - -n monitoring
+
+kubectl get -n kubernetes-dashboard svc kubernetes-dashboard -o yaml | \
+sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
+kubectl apply -f - -n kubernetes-dashboard
 
 kubectl get -n longhorn-system svc longhorn-frontend -o yaml | \
 sed -e "s/type: ClusterIP/type: LoadBalancer/" | \
