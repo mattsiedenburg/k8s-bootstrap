@@ -28,9 +28,30 @@ echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt
 
 echo "Installing docker, docker CLI, kubeadm, kubelet, kubectl and helm"
 apt-get update
-# https://releases.rancher.com/install-docker/19.03.sh
 apt-get install -y --allow-change-held-packages docker-ce=5:19.03.15~3-0~ubuntu-bionic docker-ce-cli=5:19.03.15~3-0~ubuntu-bionic containerd.io kubelet=1.19.7-00 kubeadm=1.19.7-00 kubectl=1.19.7-00 containerd.io helm
 apt-mark hold docker-ce docker-ce-cli kubelet kubeadm kubectl containerd.io helm
+
+
+echo "Setting up the Docker daemon"
+mkdir /etc/docker
+cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+echo "Create /etc/systemd/system/docker.service.d"
+mkdir -p /etc/systemd/system/docker.service.d
+
+echo "Restart Docker"
+systemctl daemon-reload
+systemctl restart docker
+systemctl enable docker
 
 echo "Adding user to docker group"
 usermod -aG docker $(logname)
@@ -128,14 +149,3 @@ kubectl apply -f - -n ingress-nginx
 echo "Taking ownership of ${HOME}/.kube and ${HOME}/.config"
 chown -R $(logname):$(id $(logname) -gn) $HOME/.kube
 chown -R $(logname):$(id $(logname) -gn) $HOME/.config
-
-# uninstall prometheus-community/kube-prometheus-stack
-# helm uninstall prometheus -n monitoring
-# kubectl delete crd prometheuses.monitoring.coreos.com
-# kubectl delete crd prometheusrules.monitoring.coreos.com
-# kubectl delete crd servicemonitors.monitoring.coreos.com
-# kubectl delete crd podmonitors.monitoring.coreos.com
-# kubectl delete crd alertmanagers.monitoring.coreos.com
-# kubectl delete crd thanosrulers.monitoring.coreos.com
-# kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
-# kubectl delete crd probes.monitoring.coreos.com
