@@ -7,7 +7,7 @@ fi
 echo "Uninstalling packages"
 apt-get autoremove -y --purge --allow-change-held-packages docker-ce kubelet kubeadm kubectl docker-ce docker-ce-cli docker docker-engine docker.io containerd runc
 echo "Installing packages"
-apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common nfs-common
 
 echo "Getting apt keys for docker, kubernetes and helm"
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
