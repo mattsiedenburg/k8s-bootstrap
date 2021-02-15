@@ -25,47 +25,46 @@ spec:
     requests:
       storage: 10Mi
 ---
-apiVersion: batch/v1beta1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: ddclient
   labels:
     app: ddclient
 spec:
-  schedule: "0 0 * * 0"
-  concurrencyPolicy: Forbid
-  jobTemplate:
+  selector:
+    matchLabels:
+      app: ddclient
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
     metadata:
       labels:
         app: ddclient
     spec:
-      backoffLimit: 3
-      activeDeadlineSeconds: 60
-      template:
-        spec:
-          containers:
+      volumes:
+        - name: ddclient
+          persistentVolumeClaim:
+            claimName: ddclient
+      containers:
+        - name: ddclient
+          image: linuxserver/ddclient
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "America/Los_Angeles"
+          volumeMounts:
             - name: ddclient
-              image: linuxserver/ddclient
-              imagePullPolicy: Always
-              resources:
-                requests:
-                  memory: 128Mi
-                  cpu: 100m
-                limits:
-                  memory: 256Mi
-                  cpu: 200m
-              env:
-                - name: PUID
-                  value: "1000"
-                - name: PUID
-                  value: "1000"
-                - name: TZ
-                  value: "America/Los_Angeles"
-              volumeMounts:
-                - name: ddclient
-                  mountPath: /config
-          restartPolicy: OnFailure
-          volumes:
-            - name: ddclient
-              persistentVolumeClaim:
-                claimName: ddclient
+              mountPath: /config
