@@ -1,0 +1,54 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Disable swap for current session
+      command: swapoff -a
+      become: true
+    - name: Disable swap permanently, persist reboots
+      replace:
+        path: /etc/fstab
+        regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+        replace: '#\1\2\3swap\4'
+        backup: yes
+    - name: Update all packages to the latest version
+      apt:
+        upgrade: dist
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Uninstall old versions of docker
+      apt:
+        name: ['docker', 'docker-engine', 'docker.io', 'containerd', 'runc']
+        state: absent
+        autoremove: yes
+        purge: yes
+    - name: Uninstall snapd
+      apt:
+        name: snapd
+        state: absent
+        autoremove: yes
+        purge: yes
+    - name: Install docker prerequisites
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'curl', 'gnupg2', 'software-properties-common']
+    - name: Install docker apt key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+    - name: Add docker apt repo
+      apt_repository: 
+        repo: deb [arch=arm64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+        update_cache: yes  
+    - name: Install docker
+      apt:
+        name: ['docker-ce=5:20.10.4~3-0~ubuntu-focal', 'docker-ce-cli=5:20.10.4~3-0~ubuntu-focal', 'containerd.io=1.4.3-1']
+        update_cache: yes
+    - name: Hold versions for docker-ce
+      dpkg_selections:
+        name: docker-ce
+        selection: hold
+    - name: Hold versions for docker-ce-cli
+      dpkg_selections:
+        name: docker-ce-cli
+        selection: hold
+    - name: Hold versions for containerd.io
+      dpkg_selections:
+        name: containerd.io
+        selection: hold
