@@ -1,0 +1,33 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Remove hold for docker-ce
+      dpkg_selections:
+        name: docker-ce
+        selection: purge
+    - name: Remove hold for docker-ce-cli
+      dpkg_selections:
+        name: docker-ce-cli
+        selection: purge
+    - name: Remove hold for containerd.io
+      dpkg_selections:
+        name: containerd.io
+        selection: purge
+    - name: Remove hold for kubeadm
+      dpkg_selections:
+        name: kubeadm
+        selection: purge
+    - name: Remove hold for kubelet
+      dpkg_selections:
+        name: kubelet
+        selection: purge
+    - name: Remove hold for kubectl
+      dpkg_selections:
+        name: kubectl
+        selection: purge
+    - name: Uninstall docker and kubernetes components
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'kubeadm', 'kubelet', 'kubectl']
+        state: absent
+        autoremove: yes
+        purge: yes

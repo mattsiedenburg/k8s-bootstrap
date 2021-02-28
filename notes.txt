@@ -1,86 +1,48 @@
 fping -g 192.168.1.0/24
-arp -a | grep dc-a6-32
-  192.168.1.52          dc-a6-32-4c-8a-ad     dynamic
-  192.168.1.69          dc-a6-32-5c-56-3a     dynamic
-  192.168.1.162         dc-a6-32-5b-d2-49     dynamic
-  192.168.1.202         dc-a6-32-48-f1-f1     dynamic
+# windows
+# arp -a | grep dc-a6-32
+#  192.168.1.52          dc-a6-32-4c-8a-ad     dynamic
+#  192.168.1.69          dc-a6-32-5c-56-3a     dynamic
+#  192.168.1.162         dc-a6-32-5b-d2-49     dynamic
+#  192.168.1.202         dc-a6-32-48-f1-f1     dynamic
+
+arp | grep dc:a6:32                                                                                                                         ──(Sun,Feb28)─┘
+192.168.1.12             ether   dc:a6:32:5c:56:3a   C                     wlp2s0
+192.168.1.13             ether   dc:a6:32:5b:d2:49   C                     wlp2s0
+192.168.1.10             ether   dc:a6:32:48:f1:f1   C                     wlp2s0
+192.168.1.11             ether   dc:a6:32:4c:8a:ad   C                     wlp2s0
 
 set DHCP reservations in router
 
 192.168.1.{10..13}
 
-# sign in and reset password
+# sign in and reset password on each host
 ssh ubuntu@192.168.1.10
 
 # copy ssh key
-type $env:USERPROFILE\.ssh\id_rsa.pub | ssh ubuntu@192.168.1.10 'cat >> .ssh/authorized_keys'
+# windows
+# type $env:USERPROFILE\.ssh\id_rsa.pub | ssh ubuntu@192.168.1.10 'cat >> .ssh/authorized_keys'
 ssh-copy-id ubuntu@192.168.1.10
-
-# rename the machines
-ssh ubuntu@192.168.1.10 'sudo hostnamectl set-hostname control0'
+ssh-copy-id ubuntu@192.168.1.11
+ssh-copy-id ubuntu@192.168.1.12
+ssh-copy-id ubuntu@192.168.1.13
+ssh ubuntu@192.168.1.10 'sudo hostnamectl set-hostname node0'
+ssh ubuntu@192.168.1.11 'sudo hostnamectl set-hostname node1'
+ssh ubuntu@192.168.1.12 'sudo hostnamectl set-hostname node2'
+ssh ubuntu@192.168.1.13 'sudo hostnamectl set-hostname node3'
 ssh ubuntu@192.168.1.10 'sudo reboot now'
-ssh ubuntu@192.168.1.11 'sudo hostnamectl set-hostname worker1'
 ssh ubuntu@192.168.1.11 'sudo reboot now'
-ssh ubuntu@192.168.1.12 'sudo hostnamectl set-hostname worker2'
 ssh ubuntu@192.168.1.12 'sudo reboot now'
-ssh ubuntu@192.168.1.13 'sudo hostnamectl set-hostname worker3'
 ssh ubuntu@192.168.1.13 'sudo reboot now'
 
 # install ansible on server
-sudo apt update
-sudo apt install software-properties-common
-sudo apt-add-repository --yes --update ppa:ansible/ansible
-sudo apt install ansible
-
+python -m pip install --user ansible
 ansible-galaxy collection install community.general
+
 
 # ping the servers
 ansible -i inventory all -m ping -u ubuntu
 
 # update the servers
 ansible-playbook -i inventory -u ubuntu playbook.yml
-
-
-
-# if swap is enabled, disabled it
-# swapoff -a
-# sed -i '/ swap / s/^/#/' /etc/fstab
-
-
-
-sudo apt-get remove docker docker-engine docker.io containerd runc
-
-sudo apt-get update
-
-sudo apt-get install \
-  apt-transport-https \
-  ca-certificates \
-  curl \
-  gnupg-agent \
-  software-properties-common
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-# verify fingerprint
-# sudo apt-key fingerprint 0EBFCD88
-
-sudo add-apt-repository \
-   "deb [arch=arm64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-
-sudo apt-get update
-
-# view versions
-# apt-cache madison docker-ce
-# install specific version
-# sudo apt-get install docker-ce=<VERSION_STRING> docker-ce-cli=<VERSION_STRING> containerd.io
-
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-sudo usermod -aG docker $(logname)
-
-
-
-
-
 
