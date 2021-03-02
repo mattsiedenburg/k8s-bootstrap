@@ -1,11 +1,6 @@
 - hosts: all
   become: yes
   tasks:
-    - name: Add memory cgroup config to boot params
-      replace:
-        path: /boot/firmware/cmdline.txt
-        regexp: '(fixrtc)$'
-        replace: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1'
     - name: Set a hostname
       hostname:
         # always unique
