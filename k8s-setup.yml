@@ -1,54 +1,6 @@
 - hosts: all
   become: yes
   tasks:
-    - name: Uninstall old versions of docker
-      apt:
-        name: ['docker', 'docker-engine', 'docker.io', 'containerd', 'runc']
-        state: absent
-        autoremove: yes
-        purge: yes
-    - name: Install packages that allow apt to be used over HTTPS
-      apt:
-        name: "{{ packages }}"
-        state: present
-        update_cache: yes
-      vars:
-        packages:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - gnupg-agent
-        - software-properties-common
-    - name: Add an apt signing key for Docker
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-    - name: Add apt repository for stable version
-      apt_repository:
-        repo: deb [arch=arm64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
-        state: present
-    - name: Install docker and its dependecies
-      apt: 
-        name: "{{ packages }}"
-        state: present
-        update_cache: yes
-      vars:
-        packages:
-        - docker-ce=5:19.03.11~3-0~ubuntu-{{ ansible_distribution_release | lower }}
-        - docker-ce-cli=5:19.03.11~3-0~ubuntu-{{ ansible_distribution_release | lower }}
-        - containerd.io=1.2.13-2
-    - name: Hold versions for docker-ce
-      dpkg_selections:
-        name: docker-ce
-        selection: hold
-    - name: Hold versions for docker-ce-cli
-      dpkg_selections:
-        name: docker-ce-cli
-        selection: hold
-    - name: Hold versions for containerd.io
-      dpkg_selections:
-        name: containerd.io
-        selection: hold
     - name: Remove swapfile from /etc/fstab
       mount:
         name: "{{ item }}"
@@ -79,11 +31,6 @@
           - kubelet 
           - kubeadm 
           - kubectl
-    - name: Restart kubelet
-      service:
-        name: kubelet
-        daemon_reload: yes
-        state: restarted
     - name: Hold versions for kubelet
       dpkg_selections:
         name: kubelet
@@ -116,11 +63,13 @@
         create: yes
     - name: update sysctl
       command: sysctl --system
+    - name: Restart kubelet
+      service:
+        name: kubelet
+        daemon_reload: yes
+        state: restarted
     - name: Add memory cgroup config to boot params
       replace:
         path: /boot/firmware/cmdline.txt
         regexp: '(fixrtc)$'
         replace: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1'
-    - name: Set a hostname
-      hostname:
-        name: node

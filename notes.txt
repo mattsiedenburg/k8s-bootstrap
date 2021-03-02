@@ -18,6 +18,9 @@ set DHCP reservations in router
 
 # sign in and reset password on each host
 ssh ubuntu@192.168.1.10
+ssh ubuntu@192.168.1.11
+ssh ubuntu@192.168.1.12
+ssh ubuntu@192.168.1.13
 
 # copy ssh key
 # windows
@@ -26,14 +29,6 @@ ssh-copy-id ubuntu@192.168.1.10
 ssh-copy-id ubuntu@192.168.1.11
 ssh-copy-id ubuntu@192.168.1.12
 ssh-copy-id ubuntu@192.168.1.13
-ssh ubuntu@192.168.1.10 'sudo hostnamectl set-hostname node0'
-ssh ubuntu@192.168.1.11 'sudo hostnamectl set-hostname node1'
-ssh ubuntu@192.168.1.12 'sudo hostnamectl set-hostname node2'
-ssh ubuntu@192.168.1.13 'sudo hostnamectl set-hostname node3'
-ssh ubuntu@192.168.1.10 'sudo reboot now'
-ssh ubuntu@192.168.1.11 'sudo reboot now'
-ssh ubuntu@192.168.1.12 'sudo reboot now'
-ssh ubuntu@192.168.1.13 'sudo reboot now'
 
 # install ansible on server
 python -m pip install --user ansible
