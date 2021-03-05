@@ -1,0 +1,21 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: Pull images
+      command: kubeadm config images pull
+    - name: Initialize the Kubernetes cluster using kubeadm
+      command: kubeadm init --node-name {{ ansible_hostname }} --pod-network-cidr=10.244.0.0/16
+    - name: Generate join command
+      command: kubeadm token create --print-join-command
+      register: join_command
+    - name: Setup kubeconfig for ubuntu user
+      command: "{{ item }}"
+      with_items:
+      - mkdir -p /home/ubuntu/.kube
+      - cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+      - chown -R ubuntu:ubuntu /home/ubuntu/.kube
+    - name: Remove taint from master node
+      command: kubectl taint nodes --all node-role.kubernetes.io/master-
+    - name: Install flannel
+      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+

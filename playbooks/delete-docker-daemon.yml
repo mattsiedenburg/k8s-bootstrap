@@ -1,0 +1,7 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Delete /etc/docker/daemon.json
+      file:
+        path: /etc/docker/daemon.json
+        state: absent

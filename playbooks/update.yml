@@ -12,6 +12,14 @@
       name: "*"
       state: latest
       update_cache: yes
-  - name: Unconditionally reboot the machine
-    reboot:
-      reboot_timeout: 3600
+  - name: Check if a reboot is required
+    shell: "[ -f /var/run/reboot-required ]"
+    failed_when: False
+    register: reboot_required
+    changed_when: reboot_required.rc == 0
+    notify: Reboot
+
+  handlers:
+    - name: Reboot
+      reboot:
+        reboot_timeout: 3600
