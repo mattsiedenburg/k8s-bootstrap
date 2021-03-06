@@ -114,7 +114,7 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - 192.168.1.10-192.168.1.49
+      - 192.168.1.20-192.168.1.49
 EOF
 
 echo "Installing nginx ingress controller"

@@ -9,8 +9,8 @@ spec:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: 192.168.1.3
-    path: /var/nfs/minecraft
+    server: 192.168.1.50
+    path: /volume1/minecraft
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -64,14 +64,14 @@ spec:
             claimName: minecraft
       containers:
         - name: minecraft
-          image: itzg/minecraft-server
+          image: itzg/minecraft-server:multiarch
           imagePullPolicy: Always
           resources:
             requests:
               memory: "1Gi"
               cpu: "1000m"
             limits:
-              memory: "3Gi"
+              memory: "2Gi"
               cpu: "2000m"
           ports:
             - name: minecraft
@@ -83,7 +83,7 @@ spec:
             - name: EULA
               value: "TRUE"
             - name: WORLD
-              value: "https://download1289.mediafire.com/titji2vvjo7g/ij0zqbumkjufv39/Witchcraft+and+Wizardry.zip"
+              value: "http://nas/mc-resources/Witchcraft%20and%20Wizardry.zip"
             - name: ENABLE_AUTOPAUSE
               value: "TRUE"
             - name: WHITELIST
