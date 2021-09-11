@@ -6,7 +6,7 @@ fping -g 192.168.1.0/24
 #  192.168.1.162         dc-a6-32-5b-d2-49     dynamic
 #  192.168.1.202         dc-a6-32-48-f1-f1     dynamic
 
-arp | grep dc:a6:32                                                                                                                         ──(Sun,Feb28)─┘
+arp | grep dc:a6:32
 192.168.1.12             ether   dc:a6:32:5c:56:3a   C                     wlp2s0
 192.168.1.13             ether   dc:a6:32:5b:d2:49   C                     wlp2s0
 192.168.1.10             ether   dc:a6:32:48:f1:f1   C                     wlp2s0
